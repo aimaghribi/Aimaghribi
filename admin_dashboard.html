@@ -1,0 +1,170 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>AI Maghribi Admin Panel</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { padding: 20px; direction: ltr; }
+        .lang-ar { direction: rtl; text-align: right; }
+        .lang-fr { direction: ltr; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2 id="title">AI Maghribi - Admin Panel</h2>
+        
+        <div class="mb-3">
+            <label for="lang" class="form-label">Language:</label>
+            <select id="lang" class="form-select" onchange="setLanguage(this.value)">
+                <option value="en" selected>English</option>
+                <option value="fr">Français</option>
+                <option value="ar">العربية</option>
+            </select>
+        </div>
+
+        <form id="clientForm">
+            <div class="mb-3">
+                <label for="phone" class="form-label" id="label-phone">Phone Number:</label>
+                <input type="text" class="form-control" id="phone" required>
+            </div>
+            <div class="mb-3">
+                <label for="profession" class="form-label" id="label-profession">Profession:</label>
+                <select id="profession" class="form-select">
+                    <option value="lawyer">Lawyer</option>
+                    <option value="doctor">Doctor</option>
+                    <option value="real_estate">Real Estate</option>
+                </select>
+            </div>
+            <div class="mb-3">
+                <label for="language" class="form-label" id="label-client-lang">Client Language:</label>
+                <select id="language" class="form-select">
+                    <option value="en">English</option>
+                    <option value="fr">Français</option>
+                    <option value="ar">العربية</option>
+                </select>
+            </div>
+            <button type="submit" class="btn btn-primary" id="btn-add">Add Client</button>
+        </form>
+
+        <hr>
+
+        <h4 id="client-list-title">Client List</h4>
+        <table class="table table-bordered mt-3">
+            <thead>
+                <tr>
+                    <th id="th-phone">Phone</th>
+                    <th id="th-profession">Profession</th>
+                    <th id="th-language">Language</th>
+                    <th id="th-actions">Actions</th>
+                </tr>
+            </thead>
+            <tbody id="clientTableBody"></tbody>
+        </table>
+    </div>
+
+    <script>
+        const langLabels = {
+            en: {
+                title: "AI Maghribi - Admin Panel",
+                phone: "Phone Number:",
+                profession: "Profession:",
+                clientLang: "Client Language:",
+                add: "Add Client",
+                list: "Client List",
+                thPhone: "Phone",
+                thProf: "Profession",
+                thLang: "Language",
+                thAct: "Actions",
+                delete: "Delete"
+            },
+            fr: {
+                title: "AI Maghribi - Panneau d'administration",
+                phone: "Numéro de téléphone:",
+                profession: "Profession:",
+                clientLang: "Langue du client:",
+                add: "Ajouter le client",
+                list: "Liste des clients",
+                thPhone: "Téléphone",
+                thProf: "Profession",
+                thLang: "Langue",
+                thAct: "Actions",
+                delete: "Supprimer"
+            },
+            ar: {
+                title: "لوحة إدارة AI Maghribi",
+                phone: "رقم الهاتف:",
+                profession: "المهنة:",
+                clientLang: "لغة العميل:",
+                add: "إضافة العميل",
+                list: "قائمة العملاء",
+                thPhone: "الهاتف",
+                thProf: "المهنة",
+                thLang: "اللغة",
+                thAct: "الخيارات",
+                delete: "حذف"
+            }
+        };
+
+        async function fetchClients() {
+            const res = await fetch("/clients");
+            const data = await res.json();
+            const table = document.getElementById("clientTableBody");
+            table.innerHTML = "";
+            data.forEach(client => {
+                const row = document.createElement("tr");
+                row.innerHTML = `
+                    <td>${client.phone}</td>
+                    <td>${client.profession}</td>
+                    <td>${client.language}</td>
+                    <td><button class="btn btn-danger btn-sm" onclick="deleteClient('${client.phone}')">${langLabels[currentLang].delete}</button></td>
+                `;
+                table.appendChild(row);
+            });
+        }
+
+        async function deleteClient(phone) {
+            await fetch("/client/" + phone, { method: "DELETE" });
+            fetchClients();
+        }
+
+        document.getElementById("clientForm").addEventListener("submit", async function (e) {
+            e.preventDefault();
+            const client = {
+                phone: document.getElementById("phone").value,
+                profession: document.getElementById("profession").value,
+                language: document.getElementById("language").value
+            };
+            await fetch("/add-client", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(client)
+            });
+            fetchClients();
+            this.reset();
+        });
+
+        let currentLang = "en";
+        function setLanguage(lang) {
+            currentLang = lang;
+            const labels = langLabels[lang];
+            document.body.className = "lang-" + lang;
+            document.getElementById("title").innerText = labels.title;
+            document.getElementById("label-phone").innerText = labels.phone;
+            document.getElementById("label-profession").innerText = labels.profession;
+            document.getElementById("label-client-lang").innerText = labels.clientLang;
+            document.getElementById("btn-add").innerText = labels.add;
+            document.getElementById("client-list-title").innerText = labels.list;
+            document.getElementById("th-phone").innerText = labels.thPhone;
+            document.getElementById("th-profession").innerText = labels.thProf;
+            document.getElementById("th-language").innerText = labels.thLang;
+            document.getElementById("th-actions").innerText = labels.thAct;
+            fetchClients();
+        }
+
+        setLanguage("en");
+    </script>
+</body>
+</html>
